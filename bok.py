@@ -54,22 +54,25 @@ def get_building_system_resources(system_name):
           return {"error": f"Could not retrieve resources. Status code: {response.status_code}"}
   return None
 
-# Function to get rating systems
-def get_rating_systems():
-  url = f"{base_url}/building-systems/8/rating-systems"
-  params = {"api_key": api_key}
-  response = requests.get(url, params=params)
-  if response.status_code == 200:
-      return response.json()
-  else:
-      return {"error": f"Could not retrieve rating systems. Status code: {response.status_code}"}
+# Function to get system bundles
+def get_system_bundles(system_name):
+  system_id = building_systems.get(system_name)
+  if system_id:
+      url = f"{base_url}/building-systems/{system_id}/system-bundles"
+      params = {"api_key": api_key}
+      response = requests.get(url, params=params)
+      if response.status_code == 200:
+          return response.json()
+      else:
+          return {"error": f"Could not retrieve system bundles. Status code: {response.status_code}"}
+  return None
 
 # Display results
 if selected_system:
   with st.spinner("Fetching data..."):
       system_info = get_building_system_info(selected_system)
       system_resources = get_building_system_resources(selected_system)
-      rating_systems = get_rating_systems()
+      system_bundles = get_system_bundles(selected_system)
   
   if system_info and "error" not in system_info:
       st.subheader(f"Information for {selected_system}")
@@ -79,11 +82,11 @@ if selected_system:
       st.subheader(f"Resources for {selected_system}")
       st.json(system_resources)
   
-  if rating_systems and "error" not in rating_systems:
-      st.subheader("Rating Systems")
-      st.json(rating_systems)
-
-  if "error" in system_info or "error" in system_resources or "error" in rating_systems:
+  if system_bundles and "error" not in system_bundles:
+      st.subheader(f"System Bundles for {selected_system}")
+      st.json(system_bundles)
+  
+  if "error" in system_info or "error" in system_resources or "error" in system_bundles:
       st.error("An error occurred while fetching some data. Please check the API key and try again.")
 
 # Add error handling for API key
