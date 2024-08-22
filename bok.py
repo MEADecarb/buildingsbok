@@ -68,6 +68,18 @@ def get_system_bundles(system_name):
           return {"error": f"Could not retrieve system bundles. Status code: {response.status_code}"}
   return None
 
+# Function to get all workspaces
+def get_workspaces():
+  url = f"{base_url}/workspaces"
+  params = {"api_key": api_key}
+  response = requests.get(url, params=params)
+  if response.status_code == 200:
+      workspaces = response.json()
+      return {workspace['name']: workspace['id'] for workspace in workspaces}
+  else:
+      st.error(f"Failed to fetch workspaces. Status code: {response.status_code}")
+      return {}
+
 # Function to get workspace info
 def get_workspace_info(workspace_id):
   url = f"{base_url}/workspaces/{workspace_id}"
@@ -125,17 +137,14 @@ if selected_system:
 # Workspace section
 st.title("Workspace Information")
 
-# Workspace options
-workspace_options = {
-  "HVAC": 83,
-  "Lighting": 84,
-  "Submetering": 85
-}
+# Get all workspaces
+workspaces = get_workspaces()
 
-selected_workspace = st.selectbox("Select a workspace:", list(workspace_options.keys()))
+# User selects a workspace from the dropdown
+selected_workspace = st.selectbox("Select a workspace:", list(workspaces.keys()))
 
 if selected_workspace:
-  workspace_id = workspace_options[selected_workspace]
+  workspace_id = workspaces[selected_workspace]
   
   with st.spinner("Fetching workspace data..."):
       workspace_info = get_workspace_info(workspace_id)
