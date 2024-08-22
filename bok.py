@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 
 # Access the API key from Streamlit secrets (or use DEMO_KEY for testing)
 api_key = st.secrets.get("SFTOOL_API_KEY", "DEMO_KEY")
@@ -67,6 +68,15 @@ def get_system_bundles(system_name):
           return {"error": f"Could not retrieve system bundles. Status code: {response.status_code}"}
   return None
 
+# Function to convert JSON to DataFrame
+def json_to_dataframe(data):
+  if isinstance(data, list):
+      return pd.json_normalize(data)
+  elif isinstance(data, dict):
+      return pd.json_normalize([data])
+  else:
+      return pd.DataFrame()
+
 # Display results
 if selected_system:
   with st.spinner("Fetching data..."):
@@ -76,15 +86,18 @@ if selected_system:
   
   if system_info and "error" not in system_info:
       st.subheader(f"Information for {selected_system}")
-      st.json(system_info)
+      df_info = json_to_dataframe(system_info)
+      st.dataframe(df_info)
   
   if system_resources and "error" not in system_resources:
       st.subheader(f"Resources for {selected_system}")
-      st.json(system_resources)
+      df_resources = json_to_dataframe(system_resources)
+      st.dataframe(df_resources)
   
   if system_bundles and "error" not in system_bundles:
       st.subheader(f"System Bundles for {selected_system}")
-      st.json(system_bundles)
+      df_bundles = json_to_dataframe(system_bundles)
+      st.dataframe(df_bundles)
   
   if "error" in system_info or "error" in system_resources or "error" in system_bundles:
       st.error("An error occurred while fetching some data. Please check the API key and try again.")
