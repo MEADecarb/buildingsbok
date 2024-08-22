@@ -4,8 +4,8 @@ import requests
 # Access the API key from Streamlit secrets
 api_key = st.secrets["SFTOOL_API_KEY"]
 
-# Set the API base URL
-base_url = "https://sftool.gov/api/v1"
+# Set the correct API base URL
+base_url = "https://api.gsa.gov/technology/sustainable-facilities-tool/v1"
 
 # Set up the Streamlit app
 st.title("SFTool Building Systems Query")
@@ -19,14 +19,16 @@ selected_system = st.selectbox("Select a building system:", building_systems)
 # Function to query the SFTool API
 def get_building_system_info(system_name):
   if system_name:
-      url = f"{base_url}/buildingsystems"
-      headers = {"Authorization": f"Bearer {api_key}"}
-      params = {"system": system_name}
-      response = requests.get(url, headers=headers, params=params)
+      url = f"{base_url}/building-systems"
+      params = {
+          "api_key": api_key,
+          "system": system_name
+      }
+      response = requests.get(url, params=params)
       if response.status_code == 200:
           return response.json()
       else:
-          return {"error": f"Could not retrieve data. Status code: {response.status_code}"}
+          return {"error": f"Could not retrieve data. Status code: {response.status_code}. Message: {response.text}"}
   return None
 
 # Display results
