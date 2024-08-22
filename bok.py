@@ -9,7 +9,7 @@ api_key = st.secrets.get("SFTOOL_API_KEY", "DEMO_KEY")
 base_url = "https://api.gsa.gov/sustainability/sftool/v1"
 
 # Set up the Streamlit app
-st.title("SFTool Building Systems Query")
+st.title("SFTool Building Systems and Workspaces Query")
 
 # Function to get building systems
 def get_building_systems():
@@ -68,6 +68,26 @@ def get_system_bundles(system_name):
           return {"error": f"Could not retrieve system bundles. Status code: {response.status_code}"}
   return None
 
+# Function to get workspace info
+def get_workspace_info(workspace_id):
+  url = f"{base_url}/workspaces/{workspace_id}"
+  params = {"api_key": api_key}
+  response = requests.get(url, params=params)
+  if response.status_code == 200:
+      return response.json()
+  else:
+      return {"error": f"Could not retrieve workspace info. Status code: {response.status_code}"}
+
+# Function to get workspace material groups
+def get_workspace_material_groups(workspace_id):
+  url = f"{base_url}/workspaces/{workspace_id}/material-groups"
+  params = {"api_key": api_key}
+  response = requests.get(url, params=params)
+  if response.status_code == 200:
+      return response.json()
+  else:
+      return {"error": f"Could not retrieve material groups. Status code: {response.status_code}"}
+
 # Function to convert JSON to DataFrame
 def json_to_dataframe(data):
   if isinstance(data, list):
@@ -77,9 +97,9 @@ def json_to_dataframe(data):
   else:
       return pd.DataFrame()
 
-# Display results
+# Display building system results
 if selected_system:
-  with st.spinner("Fetching data..."):
+  with st.spinner("Fetching building system data..."):
       system_info = get_building_system_info(selected_system)
       system_resources = get_building_system_resources(selected_system)
       system_bundles = get_system_bundles(selected_system)
@@ -100,7 +120,39 @@ if selected_system:
       st.dataframe(df_bundles)
   
   if "error" in system_info or "error" in system_resources or "error" in system_bundles:
-      st.error("An error occurred while fetching some data. Please check the API key and try again.")
+      st.error("An error occurred while fetching some building system data. Please check the API key and try again.")
+
+# Workspace section
+st.title("Workspace Information")
+
+# Workspace options
+workspace_options = {
+  "HVAC": 83,
+  "Lighting": 84,
+  "Submetering": 85
+}
+
+selected_workspace = st.selectbox("Select a workspace:", list(workspace_options.keys()))
+
+if selected_workspace:
+  workspace_id = workspace_options[selected_workspace]
+  
+  with st.spinner("Fetching workspace data..."):
+      workspace_info = get_workspace_info(workspace_id)
+      material_groups = get_workspace_material_groups(workspace_id)
+  
+  if workspace_info and "error" not in workspace_info:
+      st.subheader(f"Workspace Information for {selected_workspace}")
+      df_workspace = json_to_dataframe(workspace_info)
+      st.dataframe(df_workspace)
+  
+  if material_groups and "error" not in material_groups:
+      st.subheader(f"Material Groups for {selected_workspace}")
+      df_material_groups = json_to_dataframe(material_groups)
+      st.dataframe(df_material_groups)
+  
+  if "error" in workspace_info or "error" in material_groups:
+      st.error("An error occurred while fetching workspace data. Please check the API key and try again.")
 
 # Add error handling for API key
 if api_key == "DEMO_KEY":
