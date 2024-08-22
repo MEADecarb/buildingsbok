@@ -3,8 +3,8 @@ import requests
 import pandas as pd
 import re
 
-# Access the API key from Streamlit secrets (or use DEMO_KEY for testing)
-api_key = st.secrets.get("SFTOOL_API_KEY", "DEMO_KEY")
+# Access the API key from Streamlit secrets
+api_key = st.secrets["SFTOOL_API_KEY"]
 
 # Set the correct API base URL
 base_url = "https://api.gsa.gov/sustainability/sftool/v1"
@@ -176,7 +176,3 @@ if selected_workspace:
   
   if "error" in workspace_info or "error" in material_groups:
       st.error("An error occurred while fetching workspace data. Please check the API key and try again.")
-
-# Add error handling for API key
-if api_key == "DEMO_KEY":
-  st.warning("You are using the DEMO_KEY. For full access, please set your SFTOOL_API_KEY in Streamlit secrets.")
