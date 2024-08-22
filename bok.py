@@ -10,7 +10,7 @@ api_key = st.secrets.get("SFTOOL_API_KEY", "DEMO_KEY")
 base_url = "https://api.gsa.gov/sustainability/sftool/v1"
 
 # Set up the Streamlit app
-st.title("SFTool Building Systems and Workspaces Query")
+st.markdown("# [SFTool Building Systems and Workspaces Query](https://sftool.gov/)")
 
 # Function to get building systems
 def get_building_systems():
