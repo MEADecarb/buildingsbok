@@ -18,20 +18,30 @@ selected_system = st.selectbox("Select a building system:", building_systems)
 
 # Function to query the SFTool API
 def get_building_system_info(system_name):
-    if system_name:
-        url = f"{base_url}/buildingsystems?system={system_name}"
-        headers = {"Authorization": f"Bearer {api_key}"}
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {"error": "Could not retrieve data. Please try again later."}
-    return None
+  if system_name:
+      url = f"{base_url}/buildingsystems"
+      headers = {"Authorization": f"Bearer {api_key}"}
+      params = {"system": system_name}
+      response = requests.get(url, headers=headers, params=params)
+      if response.status_code == 200:
+          return response.json()
+      else:
+          return {"error": f"Could not retrieve data. Status code: {response.status_code}"}
+  return None
 
 # Display results
 if selected_system:
-    result = get_building_system_info(selected_system)
-    if "error" in result:
-        st.error(result["error"])
-    else:
-        st.write(result)
+  with st.spinner("Fetching data..."):
+      result = get_building_system_info(selected_system)
+  
+  if result is None:
+      st.warning("No data retrieved. Please select a building system.")
+  elif "error" in result:
+      st.error(result["error"])
+  else:
+      st.subheader(f"Information for {selected_system}")
+      st.json(result)
+
+# Add error handling for API key
+if not api_key:
+  st.error("API key is missing. Please set the SFTOOL_API_KEY in your Streamlit secrets.")
