@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import re
 
 # Access the API key from Streamlit secrets (or use DEMO_KEY for testing)
 api_key = st.secrets.get("SFTOOL_API_KEY", "DEMO_KEY")
@@ -18,7 +19,8 @@ def get_building_systems():
   response = requests.get(url, params=params)
   if response.status_code == 200:
       systems = response.json()
-      return {system['name']: system['id'] for system in systems}
+      allowed_systems = ["Lighting", "HVAC", "IEQ", "Submetering"]
+      return {system['name']: system['id'] for system in systems if system['name'] in allowed_systems}
   else:
       st.error(f"Failed to fetch building systems. Status code: {response.status_code}")
       return {}
@@ -75,7 +77,7 @@ def get_workspaces():
   response = requests.get(url, params=params)
   if response.status_code == 200:
       workspaces = response.json()
-      return {workspace['name']: workspace['id'] for workspace in workspaces}
+      return {workspace['name']: workspace['id'] for workspace in workspaces if workspace['name'] != 'Enclosed Conference'}
   else:
       st.error(f"Failed to fetch workspaces. Status code: {response.status_code}")
       return {}
@@ -109,6 +111,11 @@ def json_to_dataframe(data):
   else:
       return pd.DataFrame()
 
+# Function to remove HTML tags
+def remove_html_tags(text):
+  clean = re.compile('<.*?>')
+  return re.sub(clean, '', text)
+
 # Display building system results
 if selected_system:
   with st.spinner("Fetching building system data..."):
@@ -122,13 +129,19 @@ if selected_system:
       st.dataframe(df_info)
   
   if system_resources and "error" not in system_resources:
-      st.subheader(f"Resources for {selected_system}")
-      df_resources = json_to_dataframe(system_resources)
-      st.dataframe(df_resources)
+      with st.expander("Resources", expanded=False):
+          df_resources = json_to_dataframe(system_resources)
+          st.dataframe(df_resources)
   
   if system_bundles and "error" not in system_bundles:
       st.subheader(f"System Bundles for {selected_system}")
       df_bundles = json_to_dataframe(system_bundles)
+      if 'id' in df_bundles.columns:
+          df_bundles = df_bundles.drop(columns=['id'])
+      if 'description' in df_bundles.columns:
+          df_bundles['description'] = df_bundles['description'].apply(remove_html_tags)
+      if 'system_components' in df_bundles.columns:
+          df_bundles = df_bundles.drop(columns=['system_components'])
       st.dataframe(df_bundles)
   
   if "error" in system_info or "error" in system_resources or "error" in system_bundles:
@@ -158,6 +171,7 @@ if selected_workspace:
   if material_groups and "error" not in material_groups:
       st.subheader(f"Material Groups for {selected_workspace}")
       df_material_groups = json_to_dataframe(material_groups)
+      df_material_groups = df_material_groups.iloc[2:]  # Remove the first 2 rows
       st.dataframe(df_material_groups)
   
   if "error" in workspace_info or "error" in material_groups:
